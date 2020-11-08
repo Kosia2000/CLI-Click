@@ -184,3 +184,4 @@ def delete_dir(path, value=None):
 
 if __name__ == '__main__':
     cli()
+
