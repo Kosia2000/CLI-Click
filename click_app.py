@@ -5,6 +5,12 @@ import click
 from termcolor import colored
 
 
+def print_help():
+    help = click.get_current_context()
+    click.echo(help.get_help())
+    help.exit()
+
+
 def check_path(path):
     isExist = os.path.exists(path)
     flag = True
@@ -61,127 +67,109 @@ def setPath(user_path):
 
 
 @cli.command()
-@click.option('--path', is_flag=True, default=False, is_eager=True, help="Enter path where create new directory.")
+@click.option('--make', is_flag=True, default=False, is_eager=True, help="Enter path where create new directory.")
+@click.option('--delete', is_flag=True, default=False, is_eager=True, help="Enter path where delete directory.")
 @click.argument('value', required=False)
-def make_directory(path, value=None):
-    if path and value is not None:
-        path = value
-    else:
-        path = get_path()
-
-    path = check_path(path) + '/'
-    name = input("Enter dir name: ")
-
-    new_path = os.path.join(path, name)
-    click.echo(new_path)
-    try:
-        os.mkdir(new_path)
-        click.echo("Directory create succesfully. Path: {}". format(new_path))
-    except OSError as error:
-        if error.errno == os.errno.EEXIST:
-            click.echo(error)
-
-
-@cli.command()
-@click.option('--path', is_flag=True, default=False, is_eager=True, help="Enter path where is file to rename.")
-@click.argument('value', required=False)
-def rename_file(path, value=None):
-    if path and value is not None:
-        path = value+'/'
-    else:
-        path = get_path()+'/'
-    filename = str(
-        path+'{}'.format(input("\nEnter filename (with extension): ")))
-    click.echo("\nEnter new name (with extension): ")
-    try:
-        new_filename = str(path+input())
-        filename = os.rename(filename, new_filename)
-        click.echo("Succesfully renamed.")
-        return filename
-    except IOError as error:
-        click.echo(error)
-
-
-@cli.command()
-@click.option('--path', is_flag=True, default=False, is_eager=True, help="Enter path where show objects.")
-@click.argument('value', required=False)
-def show_inside(path, value=None):
-    if path and value is not None:
-        path = value
-    else:
-        path = get_path()
-    click.echo("\nObjects in directory: {}".format(path))
-    files = os.scandir(path)
-    for element in files:
-        if element.is_dir():
-            click.echo(colored(element.name, 'blue'))
+def directory(make, delete, value=None):
+    if make:
+        if value is not None:
+            make = value
         else:
-            click.echo(element.name)
+            make = get_path()
 
+        make = check_path(make) + '/'
+        name = input("Enter dir name: ")
 
-@cli.command()
-@click.option('--path', is_flag=True, default=False, is_eager=True, help="Enter path where delete file.")
-@click.argument('value', required=False)
-def delete_file(path, value=None):
-    if path and value is not None:
-        path = value
-    else:
-        path = get_path()
-    chose_file = input("Which file you want to delete? ")
-    click.echo(
-        "\nAre you sure you want to delete {}? Yes [y] or not [n]". format(chose_file))
-    sure = input().lower()
-
-    flag = True
-    while flag:
-        if sure == 'y':
-            try:
-                os.remove(chose_file)
-                click.echo('{} removed succesfully.' .format(chose_file))
-                flag = False
-            except OSError as error:
+        new_path = os.path.join(make, name)
+        click.echo(new_path)
+        try:
+            os.mkdir(new_path)
+            click.echo(
+                "Directory create succesfully. Path: {}". format(new_path))
+        except OSError as error:
+            if error.errno == os.errno.EEXIST:
                 click.echo(error)
-                click.echo('File cannot be removed.')
-                flag = False
-        elif sure == 'n':
-            flag = False
+
+    elif delete:
+        if value is not None:
+            delete = str(value)
         else:
-            ("You have to enter y or n.")
-            flag = True
-            sure = input().lower()
+            delete = get_path()
+        click.echo(is_empty(delete))
+        click.echo(
+            "\nAre you sure you want to delete directory? Yes [y] or not [n]")
+        sure = input().lower()
+        flag = True
+        while flag:
+            if sure == 'y':
+                try:
+                    shutil.rmtree(delete)
+                    click.echo('{} removed succesfully' .format(delete))
+                    flag = False
+                except OSError as error:
+                    click.echo(error)
+                    click.echo('File path cannot be removed.')
+                    flag = False
+            elif sure == 'n':
+                flag = False
+            else:
+                ("You have to enter y or n.")
+                flag = True
+                sure = input().lower()
+    else:
+        print_help()
 
 
 @cli.command()
-@click.option('--path', is_flag=True, default=False, is_eager=True, help="Enter path where delete directory")
+@click.option('--delete', is_flag=True, default=False, is_eager=True, help="Enter path where delete file.")
+@click.option('--make', is_flag=True, default=False, is_eager=True, help="Enter path where make file.")
 @click.argument('value', required=False)
-def delete_dir(path, value=None):
-    if path and value is not None:
-        path = str(value)
-    else:
-        path = get_path()
-    click.echo(is_empty(path))
-    click.echo(
-        "\nAre you sure you want to delete directory? Yes [y] or not [n]")
-    sure = input().lower()
-    flag = True
-    while flag:
-        if sure == 'y':
-            try:
-                shutil.rmtree(path)
-                click.echo('{} removed succesfully' .format(path))
-                flag = False
-            except OSError as error:
-                click.echo(error)
-                click.echo('File path cannot be removed.')
-                flag = False
-        elif sure == 'n':
-            flag = False
+def file(make, delete, value=None):
+    if make:
+        if value is not None:
+            make = value
+            print("in if: ", make)
         else:
-            ("You have to enter y or n.")
-            flag = True
-            sure = input().lower()
+            make = get_path()
+
+        filename = input("Enter filename: ")
+        try:
+            path = os.path.join(make, filename)
+            click.echo(path)
+            new_file = os.mknod(path)
+        except IOError as error:
+            raise error
+
+    elif delete:
+        if value is not None:
+            delete = value
+        else:
+            delete = get_path()
+        chose_file = input("Which file you want to delete? ")
+        click.echo(
+            "\nAre you sure you want to delete {}? Yes [y] or not [n]". format(chose_file))
+        sure = input().lower()
+
+        flag = True
+        while flag:
+            if sure == 'y':
+                try:
+                    os.remove(chose_file)
+                    click.echo('{} removed succesfully.' .format(chose_file))
+                    flag = False
+                except OSError as error:
+                    click.echo(error)
+                    click.echo('File cannot be removed.')
+                    flag = False
+            elif sure == 'n':
+                flag = False
+            else:
+                ("You have to enter y or n.")
+                flag = True
+                sure = input().lower()
+    else:
+        print_help()
 
 
 if __name__ == '__main__':
     cli()
-
