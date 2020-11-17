@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import click
+import subprocess
 from termcolor import colored
 
 
@@ -69,8 +70,14 @@ def setPath(user_path):
 @cli.command()
 @click.option('--make', is_flag=True, default=False, is_eager=True, help="Enter path where create new directory.")
 @click.option('--delete', is_flag=True, default=False, is_eager=True, help="Enter path where delete directory.")
+@click.option('--rename', is_flag=True, default=False, is_eager=True, help="Enter path where delete directory.")
+@click.option('--smod', is_flag=True, default=False, is_eager=True, help="Enter path to show directory permission.")
+@click.option('--chmod', is_flag=True, default=False, is_eager=True, help="Enter path to change directory permission.")
 @click.argument('value', required=False)
-def directory(make, delete, value=None):
+def directory(smod, chmod, make, delete, rename, value=None):
+    if value:
+        value = check_path(value)
+
     if make:
         if value is not None:
             make = value
@@ -89,8 +96,34 @@ def directory(make, delete, value=None):
         except OSError as error:
             if error.errno == os.errno.EEXIST:
                 click.echo(error)
+    elif chmod:
+        if value is not None:
+            chmod = value
+        else:
+            chmod = get_path()
+
+        mode = input("Enter mode: (like 777) ")
+        try:
+            subprocess.call(['chmod', '0' + mode, chmod])
+            click.echo("Directory permission code: {}".format(mode))
+        except IOError as error:
+            click.echo(error)
+
+    elif smod:
+
+        if value is not None:
+            smod = value
+        else:
+            smod = get_path()
+
+        try:
+            stats = os.stat(smod)
+            click.echo("Directory permission: {}".format(oct(stats.st_mode)))
+        except IOError as error:
+            click.echo(error)
 
     elif delete:
+        selete = check_path(delete)
         if value is not None:
             delete = str(value)
         else:
@@ -116,6 +149,7 @@ def directory(make, delete, value=None):
                 ("You have to enter y or n.")
                 flag = True
                 sure = input().lower()
+
     else:
         print_help()
 
@@ -123,8 +157,14 @@ def directory(make, delete, value=None):
 @cli.command()
 @click.option('--delete', is_flag=True, default=False, is_eager=True, help="Enter path where delete file.")
 @click.option('--make', is_flag=True, default=False, is_eager=True, help="Enter path where make file.")
+@click.option('--rename', is_flag=True, default=False, is_eager=True, help="Enter path where is file to rename.")
+@click.option('--smod', is_flag=True, default=False, is_eager=True, help="Enter path to show file mode.")
+@click.option('--chmod', is_flag=True, default=False, is_eager=True, help="Enter path to change file permission.")
 @click.argument('value', required=False)
-def file(make, delete, value=None):
+def file(smod,chmod, make, delete, rename, value=None):
+    if value:
+        value = check_path(value)
+
     if make:
         if value is not None:
             make = value
@@ -132,13 +172,38 @@ def file(make, delete, value=None):
         else:
             make = get_path()
 
-        filename = input("Enter filename: ")
+        filename = input("Enter filename (with extension): ")
         try:
             path = os.path.join(make, filename)
             click.echo(path)
             new_file = os.mknod(path)
         except IOError as error:
             raise error
+
+    elif chmodeeee:
+        if value is not None:
+            chmod = value + '/'
+        else:
+            chmod = get_path() + '/'
+
+        chose_file = input("Enter filename (with extension): ")
+        mode = input("Enter mode: (like 777) ")
+        try:
+            subprocess.call(['chmod', '0' + mode, chose_file])
+            click.echo("File permission code: {}".format(mode))
+        except IOError as error:
+            click.echo(error)
+
+    elif smod:
+        if value is not None:
+            smod = value + '/'
+        else:
+            smod = get_path() + '/'
+        chose_file = input("Enter filename (with extension): ")
+
+        stats1 = smod + chose_file
+        stats = os.stat(stats1)
+        print("File permission: ", oct(stats.st_mode))
 
     elif delete:
         if value is not None:
@@ -167,6 +232,22 @@ def file(make, delete, value=None):
                 ("You have to enter y or n.")
                 flag = True
                 sure = input().lower()
+
+    elif rename:
+        if value is not None:
+            rename = value+'/'
+        else:
+            rename = get_path()+'/'
+        filename = str(
+            rename+'{}'.format(input("\nEnter filename (with extension): ")))
+        click.echo("\nEnter new name (with extension): ")
+        try:
+            new_filename = str(rename+input())
+            filename = os.rename(filename, new_filename)
+            click.echo("Succesfully renamed.")
+            return filename
+        except IOError as error:
+            click.echo(error)
     else:
         print_help()
 
