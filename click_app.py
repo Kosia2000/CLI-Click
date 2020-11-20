@@ -73,8 +73,10 @@ def setPath(user_path):
 @click.option('--rename', is_flag=True, default=False, is_eager=True, help="Enter path where delete directory.")
 @click.option('--smod', is_flag=True, default=False, is_eager=True, help="Enter path to show directory permission.")
 @click.option('--chmod', is_flag=True, default=False, is_eager=True, help="Enter path to change directory permission.")
+@click.option('--move', is_flag=True, default=False, is_eager=True, help="Enter path where directory is.")
+
 @click.argument('value', required=False)
-def directory(smod, chmod, make, delete, rename, value=None):
+def directory(move,smod, chmod, make, delete, rename, value=None):
     if value:
         value = check_path(value)
 
@@ -96,6 +98,21 @@ def directory(smod, chmod, make, delete, rename, value=None):
         except OSError as error:
             if error.errno == os.errno.EEXIST:
                 click.echo(error)
+
+    elif move:
+        if value is not None:
+            move = value
+        else:
+            move = get_path()
+
+        new_path = input("Enter path destination: ")
+        new_path = check_path(new_path)
+        try:
+            shutil.move(move, new_path)
+            print("OK")
+        except IOError as error:
+            click.echo(error)
+
     elif chmod:
         if value is not None:
             chmod = value
@@ -160,8 +177,9 @@ def directory(smod, chmod, make, delete, rename, value=None):
 @click.option('--rename', is_flag=True, default=False, is_eager=True, help="Enter path where is file to rename.")
 @click.option('--smod', is_flag=True, default=False, is_eager=True, help="Enter path to show file mode.")
 @click.option('--chmod', is_flag=True, default=False, is_eager=True, help="Enter path to change file permission.")
+@click.option('--move', is_flag=True, default=False, is_eager=True, help="Enter path where file is.")
 @click.argument('value', required=False)
-def file(smod,chmod, make, delete, rename, value=None):
+def file(move, smod, chmod, make, delete, rename, value=None):
     if value:
         value = check_path(value)
 
@@ -180,16 +198,34 @@ def file(smod,chmod, make, delete, rename, value=None):
         except IOError as error:
             raise error
 
-    elif chmodeeee:
+    elif move:
+        if value is not None:
+            move = value + '/'
+        else:
+            move = get_path() + '/'
+
+        chose_file = input("Enter filename (with extension): ")
+        enter = move+chose_file
+        new_path = input("Enter path destination: ")
+        new_path = check_path(new_path)
+        new_path = new_path + '/' + chose_file
+        try:
+            shutil.move(enter, new_path)
+            print("OK")
+        except IOError as error:
+            click.echo(error)
+
+    elif chmod:
         if value is not None:
             chmod = value + '/'
         else:
             chmod = get_path() + '/'
 
         chose_file = input("Enter filename (with extension): ")
+        enter = chmod+chose_file
         mode = input("Enter mode: (like 777) ")
         try:
-            subprocess.call(['chmod', '0' + mode, chose_file])
+            subprocess.call(['chmod', '0' + mode, enter])
             click.echo("File permission code: {}".format(mode))
         except IOError as error:
             click.echo(error)
