@@ -4,50 +4,7 @@ import shutil
 import click
 import subprocess
 from termcolor import colored
-
-
-def print_help():
-    help = click.get_current_context()
-    click.echo(help.get_help())
-    help.exit()
-
-
-def check_path(path):
-    isExist = os.path.exists(path)
-    flag = True
-    while flag:
-        isExist = os.path.exists(path)
-        if not isExist:
-            path = input("\nInvalid path. Enter correct path.")
-            flag = True
-        else:
-            click.echo("\nValid path.")
-            flag = False
-            click.echo("\nCurrent Path: {}".format(path))
-            return path
-
-
-def is_empty(path):
-    files = os.listdir(path)
-    count = 0
-    pl = ''
-    for element in files:
-        count += 1
-    if count not in {0, 1}:
-        pl = 'are'
-    else:
-        pl = 'is'
-    return "There {} {} objects in directory.".format(pl, count)
-
-
-def get_path():
-    filename = "user_path.txt"
-    with open(filename, "r") as myFile:
-        if os.stat(filename).st_size == 0:
-            raise Exception("{} is empty.".format(filename))
-        else:
-            newFile = myFile.read().rstrip()
-            return(newFile)
+from helpers import *
 
 
 @click.group()
@@ -68,15 +25,15 @@ def setPath(user_path):
 
 
 @cli.command()
+@click.option('--show', is_flag=True, default=False, is_eager=True, help="Enter path where show what is inside.")
 @click.option('--make', is_flag=True, default=False, is_eager=True, help="Enter path where create new directory.")
 @click.option('--delete', is_flag=True, default=False, is_eager=True, help="Enter path where delete directory.")
-@click.option('--rename', is_flag=True, default=False, is_eager=True, help="Enter path where delete directory.")
+@click.option('--rename', is_flag=True, default=False, is_eager=True, help="Enter path where  directory.")
 @click.option('--smod', is_flag=True, default=False, is_eager=True, help="Enter path to show directory permission.")
 @click.option('--chmod', is_flag=True, default=False, is_eager=True, help="Enter path to change directory permission.")
 @click.option('--move', is_flag=True, default=False, is_eager=True, help="Enter path where directory is.")
-
 @click.argument('value', required=False)
-def directory(move,smod, chmod, make, delete, rename, value=None):
+def directory(show, move, smod, chmod, make, delete, rename, value=None):
     if value:
         value = check_path(value)
 
@@ -98,6 +55,20 @@ def directory(move,smod, chmod, make, delete, rename, value=None):
         except OSError as error:
             if error.errno == os.errno.EEXIST:
                 click.echo(error)
+    elif show:
+        if value is not None:
+            show = value
+        else:
+            show = get_path()
+
+        files = os.scandir(show)
+        for element in files:
+            if element.is_dir():
+                click.echo(colored(element.name, 'blue'))
+            elif element.is_file():
+                click.echo(colored(element.name, 'green'))
+            else:
+                click.echo(element.name)
 
     elif move:
         if value is not None:
