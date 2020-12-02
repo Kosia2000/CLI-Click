@@ -8,6 +8,8 @@ setup(
     py_modules = ['click_app'],
     install_requires=[
         'click==7.1.2',
+        'termcolor == 1.1.0',
+        
     ],
     entry_points = '''
         [console_scripts]
