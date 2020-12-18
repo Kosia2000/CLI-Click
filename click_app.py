@@ -1,10 +1,11 @@
-import os
-import sys
-import shutil
 import click
+import os
+import re
+import shutil
 import subprocess
-from termcolor import colored
+import sys
 from helpers import *
+from termcolor import colored
 
 
 @click.group()
@@ -13,15 +14,25 @@ def cli():
 
 
 @cli.command()
-@click.option('--path', help="Enter path to save in user_path.txt.")
-def setPath(user_path):
+def getPath():
     filename = 'user_path.txt'
     if os.path.exists(filename) == True:
         filename = 'user_path.txt'
-        path_file = open(filename, "w")
-        correct_path = check_path(user_path)
-        path_file.write(correct_path)
+        path_file = open(filename, "r")
+        if os.stat(filename).st_size == 0:
+            print(
+                "Current path is empty. Use the setpath command to do something about it...")
+        else:
+            print("Current path is {}".format(path_file.readline()))
+
         path_file.close()
+
+
+@cli.command()
+@click.option('--path', help="Enter path to save in user_path.txt.")
+def setPath(path):
+    if not set_path(path):
+        print_help()
 
 
 @cli.command()
@@ -76,11 +87,11 @@ def directory(show, move, smod, chmod, make, delete, rename, value=None):
         else:
             move = get_path()
 
+        click.echo("Moving {}".format(move))
         new_path = input("Enter path destination: ")
         new_path = check_path(new_path)
         try:
             shutil.move(move, new_path)
-            print("OK")
         except IOError as error:
             click.echo(error)
 
@@ -90,12 +101,14 @@ def directory(show, move, smod, chmod, make, delete, rename, value=None):
         else:
             chmod = get_path()
 
-        mode = input("Enter mode: (like 777) ")
-        try:
-            subprocess.call(['chmod', '0' + mode, chmod])
+        print("Change a mode of {}".format(chmod))
+        mode = ""
+        returncode = -1
+
+        while not re.match("[0-7]{3}", mode) and returncode != 0:
+            mode = input("Enter mode: (like 777) ")
+            returncode = subprocess.call(['chmod', '0' + mode, chmod])
             click.echo("Directory permission code: {}".format(mode))
-        except IOError as error:
-            click.echo(error)
 
     elif smod:
 
@@ -106,26 +119,27 @@ def directory(show, move, smod, chmod, make, delete, rename, value=None):
 
         try:
             stats = os.stat(smod)
-            click.echo("Directory permission: {}".format(oct(stats.st_mode)))
+            click.echo("Directory permission: {}".format(
+                str(oct(stats.st_mode)[-3:])))
         except IOError as error:
             click.echo(error)
 
     elif delete:
-        selete = check_path(delete)
         if value is not None:
-            delete = str(value)
+            delete = check_path(str(value))
         else:
             delete = get_path()
+
         click.echo(is_empty(delete))
         click.echo(
-            "\nAre you sure you want to delete directory? Yes [y] or not [n]")
+            "\nAre you sure you want to delete directory: {}? Yes [y] or not [n]".format(delete))
         sure = input().lower()
         flag = True
         while flag:
             if sure == 'y':
                 try:
                     shutil.rmtree(delete)
-                    click.echo('{} removed succesfully' .format(delete))
+                    click.echo('{} removed succesfully'.format(delete))
                     flag = False
                 except OSError as error:
                     click.echo(error)
@@ -137,6 +151,9 @@ def directory(show, move, smod, chmod, make, delete, rename, value=None):
                 ("You have to enter y or n.")
                 flag = True
                 sure = input().lower()
+
+    elif rename:
+        print("<(^^)7")
 
     else:
         print_help()
@@ -260,4 +277,8 @@ def file(move, smod, chmod, make, delete, rename, value=None):
 
 
 if __name__ == '__main__':
-    cli()
+    if check_so():
+        cli()
+    else:
+        print("Use the linux as the requirements file says so.")
+        sys.exit(-1)

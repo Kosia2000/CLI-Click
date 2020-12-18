@@ -1,5 +1,13 @@
 import click
 import os
+from sys import platform
+import sys
+
+def check_so():
+    if platform == "linux" or platform == "linux2":
+        return True
+    else:
+        return False
 
 
 def print_help():
@@ -14,7 +22,7 @@ def check_path(path):
     while flag:
         isExist = os.path.exists(path)
         if not isExist:
-            path = input("\nInvalid path. Enter correct path.")
+            path = input("Invalid path. Enter correct path.\n")
             flag = True
         else:
             click.echo("\nValid path.")
@@ -40,7 +48,23 @@ def get_path():
     filename = "user_path.txt"
     with open(filename, "r") as myFile:
         if os.stat(filename).st_size == 0:
-            raise Exception("{} is empty.".format(filename))
+            print("{} is empty.".format(filename))
+            path = check_path("")
+            return path
         else:
             newFile = myFile.read().rstrip()
-            return(newFile)
+            return newFile
+
+
+def set_path(path):
+    if path:
+        filename = 'user_path.txt'
+        if os.path.exists(filename) == True:
+            filename = 'user_path.txt'
+            path_file = open(filename, "w")
+            correct_path = check_path(path)
+            path_file.write(correct_path)
+            path_file.close()
+            return correct_path
+        else:
+            return False
