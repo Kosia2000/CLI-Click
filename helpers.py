@@ -3,6 +3,7 @@ import os
 from sys import platform
 import sys
 
+
 def check_so():
     if platform == "linux" or platform == "linux2":
         return True
@@ -48,7 +49,7 @@ def get_path():
     filename = "user_path.txt"
     with open(filename, "r") as myFile:
         if os.stat(filename).st_size == 0:
-            print("{} is empty.".format(filename))
+            click.echo("{} is empty.".format(filename))
             path = check_path("")
             return path
         else:
