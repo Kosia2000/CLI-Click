@@ -148,13 +148,14 @@ def directory(show, move, smod, chmod, make, delete, rename, value=None):
         else:
             rename = get_path()
 
-        old_name = input("Enter old directory name\n")
-        old_path = rename+"/"+old_name
+        split_rename = rename.split("/")
+        old_name = split_rename[:-1]
+        shorter_path = str("/".join(old_name)+"/")
+
         new_name = input("Enter new directory name\n")
-        new_path = rename+"/"+new_name
+        new_path = shorter_path + new_name
         try:
-            changing = os.rename(old_path, new_path)
-            changed_path = rename + "/" + new_name
+            changing = os.rename(rename, new_path)
             click.echo(new_path)
         except Exception as ex:
             click.echo(ex)
