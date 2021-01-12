@@ -225,7 +225,7 @@ def file(move, smod, chmod, make, delete, rename, value=None):
         while not re.match("[0-7]{3}", mode) and returncode != 0:
             mode = input("Enter mode: (like 777) ")
             returncode = subprocess.call(['chmod', '0' + mode, enter])
-            click.echo("Directory permission code: {}".format(mode))
+            click.echo("File permission code: {}".format(mode))
 
     elif smod:
         if value is not None:
